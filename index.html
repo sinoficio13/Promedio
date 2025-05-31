@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Precios CriptoYa Promedio</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f8f8f8; color: #333; }
+        h1, h2 { color: #0056b3; }
+        .container { max-width: 800px; margin: 0 auto; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+        .input-group input[type="number"] {
+            width: calc(100% - 22px); /* Ancho completo menos padding y borde */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover { background-color: #0056b3; }
+        .result-box {
+            background-color: #e9f5ff;
+            border: 1px solid #cce5ff;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .result-label { font-weight: bold; margin-bottom: 5px; display: block; color: #0056b3;}
+        .result-value { font-size: 1.2em; color: #333; }
+        #promedioParaleloBox {
+            /* Styles for this will be more specific below */
+        }
+        #promedioParaleloValue {
+            /* Styles for this will be more specific below */
+        }
+        pre { background-color: #f4f4f4; padding: 10px; border-radius: 5px; overflow-x: auto; margin-top: 20px; color: #555;}
+        .loading-message { color: #007bff; font-style: italic; margin-top: 10px; }
+        .error-message { color: #dc3545; font-weight: bold; margin-top: 10px; }
+
+        /* --- NUEVOS ESTILOS PARA PRECIOS --- */
+        /* Precio Principal: Promedio Paralelo */
+        #promedioParaleloBox {
+            background-color: #d4edda; /* Fondo verde distintivo */
+            border: 1px solid #28a745;   /* Borde verde */
+            padding: 20px;               /* Más padding para destacar */
+            margin-top: 20px;
+            margin-bottom: 25px;         /* Más espacio debajo */
+            border-radius: 8px;          /* Bordes redondeados consistentes */
+        }
+        #promedioParaleloBox .result-label { /* Etiqueta del precio principal */
+            font-size: 1.15em;           /* Etiqueta un poco más grande */
+            font-weight: bold;
+            color: #155724;             /* Verde oscuro para la etiqueta */
+            margin-bottom: 8px;
+        }
+        #promedioParaleloValue { /* Valor del precio principal */
+            font-size: 2.2em;            /* Valor significativamente más grande */
+            font-weight: bold;
+            color: #155724;             /* Verde oscuro para el valor */
+        }
+
+        /* Wrapper for referential prices (Compra & Venta side-by-side) */
+        .referential-prices-wrapper {
+            display: flex;
+            gap: 15px; /* Space between the boxes */
+            margin-top: 15px; /* Space above the wrapper */
+            margin-bottom: 20px; /* Space below the wrapper */
+        }
+
+        /* Common styles for referential price boxes (Compra & Venta) */
+        .referential-result-box {
+            flex: 1; /* Each box takes equal width */
+            padding: 10px 15px;
+            border-radius: 5px;
+            /* margin-top is removed as it's handled by the wrapper's gap and margin-top */
+        }
+
+        /* General label/value styles for referential boxes, can be overridden */
+        .referential-result-box .result-label { /* Will be overridden by more specific styles below */
+            font-size: 0.85em;           /* Etiqueta más pequeña */
+            font-weight: normal;       /* Menos énfasis */
+            color: #495057;           /* Color de texto más suave */
+            margin-bottom: 4px;
+        }
+        .referential-result-box .result-value { /* Will be overridden by more specific styles below */
+            font-size: 1.05em;           /* Valor más pequeño */
+            color: #343a40;           /* Color de texto estándar */
+        }
+
+        /* Styles for Compra Box (Green) */
+        .referential-prices-wrapper .referential-result-box:first-child {
+            background-color: #e6f7ec; /* Subtle green background */
+            border: 1px solid #b7ebc9;   /* Subtle green border */
+        }
+        .referential-prices-wrapper .referential-result-box:first-child .result-label {
+            color: #096A2E; /* Darker, but still subtle green for label */
+        }
+        .referential-prices-wrapper .referential-result-box:first-child .result-value {
+            color: #0F5132; /* Stronger green for value */
+            font-weight: bold;
+        }
+
+        /* Styles for Venta Box (Red) */
+        .referential-prices-wrapper .referential-result-box:last-child {
+            background-color: #fdecea; /* Subtle red background */
+            border: 1px solid #f5c6cb;   /* Subtle red border */
+        }
+        .referential-prices-wrapper .referential-result-box:last-child .result-label {
+            color: #842029; /* Darker, but still subtle red for label */
+        }
+        .referential-prices-wrapper .referential-result-box:last-child .result-value {
+            color: #A91E2C; /* Stronger red for value */
+            font-weight: bold;
+        }
+        /* --- FIN NUEVOS ESTILOS --- */
+
+        /* Estilos para la tabla de exchanges */
+        #exchangesTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+        }
+        #exchangesTable th, #exchangesTable td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        #exchangesTable th {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+        #exchangesTable tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        #exchangesTable tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        #exchangesList {
+            margin-top: 40px;
+        }
+
+        /* Estilo para el descargo de responsabilidad */
+        .disclaimer {
+            font-size: 0.85em;
+            color: #6c757d; /* Un gris más suave */
+            margin-top: 30px;
+            text-align: center;
+            border-top: 1px solid #eee; /* Una línea sutil arriba */
+            padding-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Precios Promedio USDT/VES</h1>
+        <p>Mostrando precios promedio USDT/VES.</p>
+
+        <p id="mensajeCarga" class="loading-message" style="display: none;">Cargando datos...</p>
+        <p id="mensajeError" class="error-message" style="display: none;"></p>
+
+
+        <!-- Precio Paralelo (Principal) - Ahora primero -->
+        <div class="result-box" id="promedioParaleloBox">
+            <span class="result-label">Precio Paralelo (Promedio Total):</span>
+            <span id="promedioParaleloValue" class="result-value">Calculando...</span>
+        </div>
+
+        <!-- Precios de Compra y Venta (Referenciales) - Ahora en un wrapper para ponerlos lado a lado -->
+        <div class="referential-prices-wrapper">
+            <div class="result-box referential-result-box"> <!-- Compra -->
+                <span class="result-label">Promedio Total Compra:</span>
+                <span id="promedioTotalCompra" class="result-value">Calculando...</span>
+            </div>
+            <div class="result-box referential-result-box"> <!-- Venta -->
+                <span class="result-label">Promedio Total Venta:</span>
+                <span id="promedioTotalVenta" class="result-value">Calculando...</span>
+            </div>
+        </div>
+
+        <div id="exchangesList" style="display: none;">
+            <h2>Detalle por Exchange:</h2>
+            <table id="exchangesTable">
+                <thead>
+                    <tr>
+                        <th>Exchange</th>
+                        <th>Compra</th>
+                        <th>Venta</th>
+                    </tr>
+                </thead>
+                <tbody id="exchangesTableBody">
+                    </tbody>
+            </table>
+            <p>Moneda base: <span id="monedaBaseDisplay"></span>, Fiat base: <span id="fiatBaseDisplay"></span></p>
+        </div>
+
+
+        <!-- Descargo de Responsabilidad -->
+        <div class="disclaimer">
+            <p>Esta herramienta es solo para uso personal. Todos los datos de precios se obtienen a través de una API pública y se muestran tal como se reciben. No se garantiza la exactitud ni la disponibilidad continua de los datos.</p>
+        </div>
+
+        <script src="criptoya_promedio.js"></script>
+
+        <script>
+            async function cargarYMostrarPrecios() {
+                // Volumen fijo
+                const volumen = 10000; // Actualizado a 10000 USDT
+
+                const mensajeCarga = document.getElementById('mensajeCarga');
+                const mensajeError = document.getElementById('mensajeError');
+                const promedioTotalCompraSpan = document.getElementById('promedioTotalCompra');
+                const promedioTotalVentaSpan = document.getElementById('promedioTotalVenta');
+                const promedioParaleloValueSpan = document.getElementById('promedioParaleloValue');
+                
+                const exchangesListDiv = document.getElementById('exchangesList');
+                const exchangesTableBody = document.getElementById('exchangesTableBody');
+                const monedaBaseDisplay = document.getElementById('monedaBaseDisplay');
+                const fiatBaseDisplay = document.getElementById('fiatBaseDisplay');
+
+                // Reiniciar mensajes y valores
+                mensajeCarga.style.display = 'block';
+                mensajeError.style.display = 'none';
+                exchangesListDiv.style.display = 'none'; // Ocultar la tabla hasta que haya resultados
+
+                promedioTotalCompraSpan.textContent = 'Cargando...';
+                promedioTotalVentaSpan.textContent = 'Cargando...';
+                promedioParaleloValueSpan.textContent = 'Cargando...';
+                exchangesTableBody.innerHTML = ''; // Limpiar la tabla anterior
+
+                const moneda = 'USDT';
+                const fiat = 'VES';
+
+                try {
+                    const datosPromedio = await obtenerYPromediarPreciosCriptoYa(moneda, fiat, volumen);
+
+                    mensajeCarga.style.display = 'none';
+
+                    if (datosPromedio) {
+                        promedioTotalCompraSpan.textContent =
+                            typeof datosPromedio.promedioTotalCompra === 'number' ?
+                            `${datosPromedio.promedioTotalCompra.toFixed(2)} ${fiat.toUpperCase()}` :
+                            datosPromedio.promedioTotalCompra;
+
+                        promedioTotalVentaSpan.textContent =
+                            typeof datosPromedio.promedioTotalVenta === 'number' ?
+                            `${datosPromedio.promedioTotalVenta.toFixed(2)} ${fiat.toUpperCase()}` :
+                            datosPromedio.promedioTotalVenta;
+
+                        promedioParaleloValueSpan.textContent =
+                            typeof datosPromedio.promedioParalelo === 'number' ?
+                            `${datosPromedio.promedioParalelo.toFixed(2)} ${fiat.toUpperCase()}` :
+                            datosPromedio.promedioParalelo;
+
+                        // Actualizar información de moneda/fiat/volumen para la tabla
+                        monedaBaseDisplay.textContent = datosPromedio.monedaBase;
+                        fiatBaseDisplay.textContent = datosPromedio.fiatBase;
+                        
+                        // Llenar la tabla de exchanges
+                        if (datosPromedio.detallesExchanges && datosPromedio.detallesExchanges.length > 0) {
+                            datosPromedio.detallesExchanges.forEach(exchange => {
+                                const row = exchangesTableBody.insertRow();
+                                const cellName = row.insertCell(0);
+                                const cellCompra = row.insertCell(1);
+                                const cellVenta = row.insertCell(2);
+
+                                cellName.textContent = exchange.nombre;
+                                cellCompra.textContent = exchange.compra !== 'N/A' ? `${exchange.compra} ${datosPromedio.fiatBase}` : 'N/A';
+                                cellVenta.textContent = exchange.venta !== 'N/A' ? `${exchange.venta} ${datosPromedio.fiatBase}` : 'N/A';
+                            });
+                            exchangesListDiv.style.display = 'block'; // Mostrar la sección de la tabla
+                        } else {
+                            exchangesTableBody.innerHTML = '<tr><td colspan="3">No se encontraron datos de exchanges para mostrar.</td></tr>';
+                            exchangesListDiv.style.display = 'block';
+                        }
+                        
+                        console.log("Resultados finales mostrados en HTML:", datosPromedio);
+
+                    } else {
+                        mensajeError.textContent = "No se pudieron obtener los precios o el volumen es inválido. Revisa la consola.";
+                        mensajeError.style.display = 'block';
+                        promedioTotalCompraSpan.textContent = 'N/A';
+                        promedioTotalVentaSpan.textContent = 'N/A';
+                        promedioParaleloValueSpan.textContent = 'N/A';
+                        exchangesTableBody.innerHTML = '<tr><td colspan="3">No se pudieron cargar los datos de exchanges.</td></tr>';
+                        exchangesListDiv.style.display = 'block';
+                    }
+                } catch (error) {
+                    mensajeCarga.style.display = 'none';
+                    mensajeError.textContent = `Error al obtener datos: ${error.message}. Revisa la consola.`;
+                    mensajeError.style.display = 'block';
+                    console.error("Error capturado en el HTML:", error);
+                    promedioTotalCompraSpan.textContent = 'ERROR';
+                    promedioTotalVentaSpan.textContent = 'ERROR';
+                    promedioParaleloValueSpan.textContent = 'ERROR';
+                    exchangesTableBody.innerHTML = '<tr><td colspan="3">Ocurrió un error al cargar los datos.</td></tr>';
+                    exchangesListDiv.style.display = 'block';
+                }
+            }
+
+            // Establecer el volumen inicial en el display cuando la página carga
+            document.addEventListener('DOMContentLoaded', () => {
+                // Ya no se muestra el volumen, así que no es necesario actualizar estos spans
+                document.getElementById('monedaBaseDisplay').textContent = 'USDT';
+                document.getElementById('fiatBaseDisplay').textContent = 'VES';
+
+                // Ejecutar la carga de precios automáticamente al cargar la página
+                cargarYMostrarPrecios();
+            });
+        </script>
+    </div>
+</body>
+</html>
